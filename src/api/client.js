@@ -11,7 +11,7 @@ const _gwCfg = getProtectedGatewayConfig();
 export const APPS_SCRIPT_URL = _gwCfg.endpoint;
 export const SPREADSHEET_ID = _gwCfg.spreadsheetId;
 
-export const DEFAULT_PRODUCT_THUMB = "/public/icon/logo.png";
+export const DEFAULT_PRODUCT_THUMB = ((typeof window !== "undefined" && window.__APP_BASE__) ? window.__APP_BASE__ : "") + "/public/icon/logo.png";
 
 const DEMO_SKUS = new Set(["dcbd-wt-01", "dcbd-gs-02", "dcbd-hn-03", "dcbd-fl-04", "dcbd-ch-05"]);
 
