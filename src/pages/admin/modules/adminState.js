@@ -3097,6 +3097,31 @@ window.openBulkSelectedProductsModal = function(mode) {
     return rows;
   };
 
+  window.loadSheetJsClientParser = function() {
+    if (typeof window === 'undefined') return Promise.resolve(null);
+    if (window.XLSX && window.XLSX.read) return Promise.resolve(window.XLSX);
+    if (window.__dcbdXlsxPromise) return window.__dcbdXlsxPromise;
+    window.__dcbdXlsxPromise = new Promise((resolve) => {
+      const urls = [
+        'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+      ];
+      let idx = 0;
+      function tryNext() {
+        if (window.XLSX && window.XLSX.read) return resolve(window.XLSX);
+        if (idx >= urls.length) return resolve(null);
+        const s = document.createElement('script');
+        s.src = urls[idx++];
+        s.async = true;
+        s.onload = () => resolve((window.XLSX && window.XLSX.read) ? window.XLSX : null);
+        s.onerror = () => tryNext();
+        document.head.appendChild(s);
+      }
+      tryNext();
+    });
+    return window.__dcbdXlsxPromise;
+  };
+
   window.parseAnyBulkUploadFile = async function(file) {
     if (!file) return [];
     const ext = (file.name.split('.').pop() || '').toLowerCase();
@@ -3105,7 +3130,35 @@ window.openBulkSelectedProductsModal = function(mode) {
       return window.parseCsvLinesToRows(text);
     }
 
-    // For .xlsx, .xls, .pdf -> parse directly on cPanel server (/api/index.php?action=products/parse_bulk_file)
+    // 1. Client-side Excel (.xlsx / .xls) parsing via SheetJS (works on GitHub Pages & offline)
+    if (['xlsx', 'xls', 'ods'].includes(ext)) {
+      try {
+        const XLSX = await window.loadSheetJsClientParser();
+        if (XLSX && XLSX.read) {
+          const buf = await file.arrayBuffer();
+          const wb = XLSX.read(buf, { type: 'array' });
+          for (const sheetName of (wb.SheetNames || [])) {
+            const ws = wb.Sheets[sheetName];
+            if (!ws) continue;
+            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            const cleanRows = (rawRows || []).filter(r =>
+              Array.isArray(r) && r.some(c => String(c ?? '').trim() !== '')
+            ).map(r => r.map(c => String(c ?? '').trim()));
+            if (cleanRows.length > 0) {
+              return cleanRows;
+            }
+          }
+        }
+      } catch (xlsxErr) {}
+    }
+
+    // 2. For cPanel PHP server (.pdf or server fallback) — skip on static hosts like GitHub Pages
+    const phpUnavailable = Boolean(window.__DCBD_PHP_UNAVAILABLE__) ||
+      (typeof window !== 'undefined' && window.location.hostname.includes('github.io'));
+    if (phpUnavailable) {
+      return [];
+    }
+
     const baseApi = window.__DCBD_PHP_API_URL__ || ((window.__APP_BASE__ || '') + '/api/index.php');
     try {
       const fd = new FormData();
