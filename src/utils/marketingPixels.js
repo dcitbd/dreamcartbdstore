@@ -650,6 +650,7 @@ export function initMarketingAdPixels(forceReinit = false) {
  */
 function sendServerCapiEvent(eventName, eventId, customData = {}, userData = {}) {
   if (typeof window === 'undefined' || typeof fetch === 'undefined') return;
+  if (window.__DCBD_PHP_UNAVAILABLE__ || window.location.hostname.includes('github.io')) return;
   try {
     const apiUrl = window.__DCBD_PHP_API_URL__ || ((window.__APP_BASE__ || '') + '/api/index.php');
     const attr = captureAndGetAdAttribution();

@@ -49,6 +49,7 @@
     }
   }
   window.__APP_BASE__ = base === '/' ? '' : base.replace(/\/$/, '');
+  if (window.location.hostname.includes('github.io')) { window.__DCBD_PHP_UNAVAILABLE__ = true; }
   if (document.head && !document.querySelector('base')) {
     var baseTag = document.createElement('base');
     baseTag.href = base;
