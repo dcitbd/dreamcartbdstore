@@ -454,7 +454,10 @@ const SHEET_NAME_TO_ACTION = {
  */
 export async function fetchFromLocalServerApi(action, payload = {}, method = 'GET', timeoutMs = 4500) {
   if (typeof window === 'undefined' || typeof fetch === 'undefined') return null;
-  if (window.__DCBD_PHP_UNAVAILABLE__) return null;
+  if (window.__DCBD_PHP_UNAVAILABLE__ || window.location.hostname.includes('github.io')) {
+    window.__DCBD_PHP_UNAVAILABLE__ = true;
+    return null;
+  }
   try {
     const baseApi = window.__DCBD_PHP_API_URL__ || ((window.__APP_BASE__ || '') + '/api/index.php');
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -478,11 +481,13 @@ export async function fetchFromLocalServerApi(action, payload = {}, method = 'GE
     const resp = await fetch(url, opts);
     if (timer) clearTimeout(timer);
     if (!resp || !resp.ok) {
+      if (resp && resp.status === 405) window.__DCBD_PHP_UNAVAILABLE__ = true;
       return null;
     }
     const rawText = await resp.text();
     const trimmed = (rawText || '').trim();
     if (!trimmed || trimmed.startsWith('<?php') || trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
+      if (trimmed.startsWith('<?php')) window.__DCBD_PHP_UNAVAILABLE__ = true;
       return null;
     }
     return JSON.parse(trimmed);
