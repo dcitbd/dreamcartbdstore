@@ -153,7 +153,8 @@ if (typeof window !== 'undefined') {
 
   if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+      const appBase = window.__APP_BASE__ || '';
+      navigator.serviceWorker.register(`${appBase}/sw.js`, { scope: `${appBase}/` }).catch(() => {});
     });
   }
 }
