@@ -50,11 +50,7 @@
   }
   window.__APP_BASE__ = base === '/' ? '' : base.replace(/\/$/, '');
   if (window.location.hostname.includes('github.io')) { window.__DCBD_PHP_UNAVAILABLE__ = true; }
-  if (document.head && !document.querySelector('base')) {
-    var baseTag = document.createElement('base');
-    baseTag.href = base;
-    document.head.insertBefore(baseTag, document.head.firstChild);
-  }
+  // Note: Do not inject <base> tag because nested route HTML files use depth-relative ../ paths.
 
   // 2.5 Universal Logo & Icon Path Resolver + Automatic Multi-Path Fallback Engine
   var appBase = window.__APP_BASE__ || '';
