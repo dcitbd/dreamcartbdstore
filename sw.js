@@ -1,9 +1,10 @@
-const DCBD_CACHE = 'dcbd-pwa-v1';
+const DCBD_CACHE = 'dcbd-pwa-v2';
+const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 const SHELL_ASSETS = [
-  '/public/manifest.webmanifest',
-  '/public/icon/icon-192.png',
-  '/public/icon/icon-512.png',
-  '/public/icon/logo.png'
+  `${SCOPE_PATH}/public/manifest.webmanifest`,
+  `${SCOPE_PATH}/public/icon/icon-192.png`,
+  `${SCOPE_PATH}/public/icon/icon-512.png`,
+  `${SCOPE_PATH}/public/icon/logo.png`
 ];
 
 self.addEventListener('install', (event) => {
@@ -27,9 +28,9 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api') || url.pathname.startsWith('/admin')) return;
+  if (url.pathname.startsWith(`${SCOPE_PATH}/api`) || url.pathname.startsWith(`${SCOPE_PATH}/admin`)) return;
 
-  if (url.pathname.startsWith('/public/icon/') || url.pathname === '/public/manifest.webmanifest') {
+  if (url.pathname.startsWith(`${SCOPE_PATH}/public/icon/`) || url.pathname === `${SCOPE_PATH}/public/manifest.webmanifest`) {
     event.respondWith(
       caches.match(req).then((cached) => cached || fetch(req).then((res) => {
         if (res && res.ok) {
